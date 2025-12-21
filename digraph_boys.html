@@ -1,0 +1,245 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Directed regression network — Boys</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { font-family: Arial, sans-serif; }
+
+    #wrap {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+    }
+
+    #header {
+      grid-column: 1 / span 2;
+      padding: 10px 14px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #mynetwork {
+      grid-column: 1;
+      grid-row: 2;
+      width: 100%;
+      height: 100%;
+      min-height: 600px;
+    }
+
+    #panel {
+      grid-column: 2;
+      grid-row: 2;
+      border-left: 1px solid #ddd;
+      padding: 12px 12px;
+      overflow: auto;
+      background: #fafafa;
+    }
+
+    .small { color: #666; font-size: 13px; line-height: 1.35; }
+    .target { color: #4C78A8; font-weight: 700; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th, td { border-bottom: 1px solid #eee; padding: 6px 4px; vertical-align: top; }
+    th { text-align: left; color:#333; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+
+<body>
+<div id="wrap">
+  <div id="header">
+    <div><b>Directed regression network — Boys</b></div>
+    <div class="small">
+      Hover over a <span class="target">blue target</span> node to highlight its predictors (incoming edges).
+      Edge thickness ∝ |β|·CVR²; node size ∝ Σ|β|·CVR² (in+out).
+    </div>
+  </div>
+
+  <div id="mynetwork"></div>
+
+  <div id="panel">
+    <div class="small">
+      <b>Panel</b><br>
+      Najedź na <span class="target">target</span>, żeby zobaczyć jego predyktory.
+    </div>
+    <div id="panel_content" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<script>
+  const nodes = new vis.DataSet([{"id": "10.Understood_Strengths[F2]", "label": "Understood_Strengths (10)", "title": "Understood_Strengths (10)", "value": 18.64345939188477, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "11.Friendly_Atmosphere[F3]", "label": "Friendly_Atmosphere (11)", "title": "Friendly_Atmosphere (11)", "value": 13.330434674157635, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "12.Supports_Goals[F2]", "label": "Supports_Goals (12)", "title": "Supports_Goals (12)", "value": 24.886497139845105, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "13.Too_Critical[F2-]", "label": "Too_Critical (13)", "title": "Too_Critical (13)", "value": 17.51104331776591, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "15.Explains_Well[F1]", "label": "Explains_Well (15)", "title": "Explains_Well (15)", "value": 16.83300594609797, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "17.Encouraged_Effort[F2]", "label": "Encouraged_Effort (17)", "title": "Encouraged_Effort (17)", "value": 28.78939247465989, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "18.Improved_Math_Understanding[F2]", "label": "Improved_Math_Understanding (18)", "title": "Improved_Math_Understanding (18)", "value": 44.86469306028547, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "19.Prepared_AdvMath[F4]", "label": "Prepared_AdvMath (19)", "title": "Prepared_AdvMath (19)", "value": 52.0, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "20.Encouraged_Thinking[F1]", "label": "Encouraged_Thinking (20)", "title": "Encouraged_Thinking (20)", "value": 18.1644701631162, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "21.Inspired_MathRel_Career[F4]", "label": "Inspired_MathRel_Career (21)", "title": "Inspired_MathRel_Career (21)", "value": 34.01521133328376, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "22.Discouraged_Career[F4-]", "label": "Discouraged_Career (22)", "title": "Discouraged_Career (22)", "value": 14.716941274847164, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "23.Encouraged_Respect[F3]", "label": "Encouraged_Respect (23)", "title": "Encouraged_Respect (23)", "value": 23.662476560503567, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "24.Belief_SolvProblems[F4]", "label": "Belief_SolvProblems (24)", "title": "Belief_SolvProblems (24)", "value": 48.40031583080541, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "25.Proud_Achievements[F2]", "label": "Proud_Achievements (25)", "title": "Proud_Achievements (25)", "value": 31.40127694732383, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "26.Continue_MathRel_Studies[F4]", "label": "Continue_MathRel_Studies (26)", "title": "Continue_MathRel_Studies (26)", "value": 31.718030089550677, "shape": "dot", "color": {"background": "#4C78A8", "border": "#1F4E79"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "3.Listens_Questions[F1]", "label": "Listens_Questions (3)", "title": "Listens_Questions (3)", "value": 24.88574409797573, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "4.Avoids_Anger[F3]", "label": "Avoids_Anger (4)", "title": "Avoids_Anger (4)", "value": 12.0, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "6.Seemed_Stressed[F3-]", "label": "Seemed_Stressed (6)", "title": "Seemed_Stressed (6)", "value": 12.814724352879642, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "7.Cares_Success[F1]", "label": "Cares_Success (7)", "title": "Cares_Success (7)", "value": 13.120331977580543, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}, {"id": "8.Clear_Feedback[F2]", "label": "Clear_Feedback (8)", "title": "Clear_Feedback (8)", "value": 12.988597472925342, "shape": "dot", "color": {"background": "#B0B0B0", "border": "#666666"}, "borderWidth": 2, "font": {"size": 18, "color": "#111111"}}]);
+  const edges = new vis.DataSet([{"id": "e0", "from": "19.Prepared_AdvMath[F4]", "to": "17.Encouraged_Effort[F2]", "width": 6.1044368179863895, "title": "Prepared_AdvMath (19) → Encouraged_Effort (17)<br>β=0.383, CV R²=0.67, |β|·R²=0.257<br>t=5.56, p=1.7e-07", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3830905136375646, "cv_r2": 0.6713657830509134, "w": 0.2571938626676602, "p": 1.696293659638299e-07}, {"id": "e1", "from": "12.Supports_Goals[F2]", "to": "17.Encouraged_Effort[F2]", "width": 4.898017201711224, "title": "Supports_Goals (12) → Encouraged_Effort (17)<br>β=0.322, CV R²=0.67, |β|·R²=0.216<br>t=3.90, p=0.00016", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3219551665320017, "cv_r2": 0.6713657830509134, "w": 0.21614968248604455, "p": 0.0001599076669363}, {"id": "e2", "from": "8.Clear_Feedback[F2]", "to": "17.Encouraged_Effort[F2]", "width": 2.2072793372558754, "title": "Clear_Feedback (8) → Encouraged_Effort (17)<br>β=0.186, CV R²=0.67, |β|·R²=0.125<br>t=2.31, p=0.0225", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.1856019515358363, "cv_r2": 0.6713657830509134, "w": 0.12460679952863443, "p": 0.022547732644012}, {"id": "e3", "from": "26.Continue_MathRel_Studies[F4]", "to": "17.Encouraged_Effort[F2]", "width": 1.1166042523238695, "title": "Continue_MathRel_Studies (26) → Encouraged_Effort (17)<br>β=0.130, CV R²=0.67, |β|·R²=0.088<br>t=2.50, p=0.0137", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.1303319617270009, "cv_r2": 0.6713657830509134, "w": 0.08750041954140964, "p": 0.0136609883058572}, {"id": "e4", "from": "12.Supports_Goals[F2]", "to": "18.Improved_Math_Understanding[F2]", "width": 3.4328377705834288, "title": "Supports_Goals (12) → Improved_Math_Understanding (18)<br>β=0.216, CV R²=0.77, |β|·R²=0.166<br>t=3.27, p=0.00139", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.2157343655061026, "cv_r2": 0.7708651803857652, "w": 0.16630211058127037, "p": 0.0013876225901111}, {"id": "e5", "from": "19.Prepared_AdvMath[F4]", "to": "18.Improved_Math_Understanding[F2]", "width": 9.053933710008858, "title": "Prepared_AdvMath (19) → Improved_Math_Understanding (18)<br>β=0.464, CV R²=0.77, |β|·R²=0.358<br>t=7.38, p=2.22e-11", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.4638166564803027, "cv_r2": 0.7708651803857652, "w": 0.357540110563611, "p": 2.2242847035712975e-11}, {"id": "e6", "from": "15.Explains_Well[F1]", "to": "18.Improved_Math_Understanding[F2]", "width": 6.902086921478004, "title": "Explains_Well (15) → Improved_Math_Understanding (18)<br>β=0.369, CV R²=0.77, |β|·R²=0.284<br>t=5.08, p=1.41e-06", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3688467276840373, "cv_r2": 0.7708651803857652, "w": 0.28433109927085465, "p": 1.4094490953023098e-06}, {"id": "e7", "from": "6.Seemed_Stressed[F3-]", "to": "18.Improved_Math_Understanding[F2]", "width": 1.994944761370069, "title": "Seemed_Stressed (6) → Improved_Math_Understanding (18)<br>β=0.152, CV R²=0.77, |β|·R²=0.117<br>t=3.11, p=0.00231", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.1522741798509367, "cv_r2": 0.7708651803857652, "w": 0.11738286311888677, "p": 0.0023073093292124}, {"id": "e8", "from": "18.Improved_Math_Understanding[F2]", "to": "19.Prepared_AdvMath[F4]", "width": 10.0, "title": "Improved_Math_Understanding (18) → Prepared_AdvMath (19)<br>β=0.539, CV R²=0.72, |β|·R²=0.390<br>t=7.62, p=6.18e-12", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.5385220137820149, "cv_r2": 0.72369685069812, "w": 0.38972668540565375, "p": 6.184273123161809e-12}, {"id": "e9", "from": "24.Belief_SolvProblems[F4]", "to": "19.Prepared_AdvMath[F4]", "width": 7.43774849979647, "title": "Belief_SolvProblems (24) → Prepared_AdvMath (19)<br>β=0.418, CV R²=0.72, |β|·R²=0.303<br>t=5.85, p=4.18e-08", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.4180688341495656, "cv_r2": 0.72369685069812, "w": 0.30255509864907526, "p": 4.1775400184289015e-08}, {"id": "e10", "from": "3.Listens_Questions[F1]", "to": "20.Encouraged_Thinking[F1]", "width": 3.8484949750424073, "title": "Listens_Questions (3) → Encouraged_Thinking (20)<br>β=0.411, CV R²=0.44, |β|·R²=0.180<br>t=4.39, p=2.47e-05", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.411319084235587, "cv_r2": 0.4386944115559818, "w": 0.18044338362047616, "p": 2.474375603002936e-05}, {"id": "e11", "from": "24.Belief_SolvProblems[F4]", "to": "20.Encouraged_Thinking[F1]", "width": 3.224268880453103, "title": "Belief_SolvProblems (24) → Encouraged_Thinking (20)<br>β=0.363, CV R²=0.44, |β|·R²=0.159<br>t=4.42, p=2.18e-05", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3629093149543044, "cv_r2": 0.4386944115559818, "w": 0.15920628837206305, "p": 2.180232390310781e-05}, {"id": "e12", "from": "26.Continue_MathRel_Studies[F4]", "to": "21.Inspired_MathRel_Career[F4]", "width": 5.287718192061188, "title": "Continue_MathRel_Studies (26) → Inspired_MathRel_Career (21)<br>β=0.470, CV R²=0.49, |β|·R²=0.229<br>t=6.37, p=3.57e-09", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.4701943800932505, "cv_r2": 0.487900103516502, "w": 0.2294078867203744, "p": 3.5718083454103158e-09}, {"id": "e13", "from": "19.Prepared_AdvMath[F4]", "to": "21.Inspired_MathRel_Career[F4]", "width": 4.044753600745834, "title": "Prepared_AdvMath (19) → Inspired_MathRel_Career (21)<br>β=0.384, CV R²=0.49, |β|·R²=0.187<br>t=3.70, p=0.000328", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3835219362997056, "cv_r2": 0.487900103516502, "w": 0.18712039242147563, "p": 0.000327708845197}, {"id": "e14", "from": "13.Too_Critical[F2-]", "to": "21.Inspired_MathRel_Career[F4]", "width": 1.3564017682035923, "title": "Too_Critical (13) → Inspired_MathRel_Career (21)<br>β=0.196, CV R²=0.49, |β|·R²=0.096<br>t=2.45, p=0.0158", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.1960620321871398, "cv_r2": 0.487900103516502, "w": 0.09565868579976125, "p": 0.0158005283983078}, {"id": "e15", "from": "24.Belief_SolvProblems[F4]", "to": "21.Inspired_MathRel_Career[F4]", "width": 1.4374638063567857, "title": "Belief_SolvProblems (24) → Inspired_MathRel_Career (21)<br>β=0.202, CV R²=0.49, |β|·R²=0.098<br>t=1.68, p=0.095", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.2017145222055303, "cv_r2": 0.487900103516502, "w": 0.09841653626485997, "p": 0.09501021844744}, {"id": "e16", "from": "3.Listens_Questions[F1]", "to": "22.Discouraged_Career[F4-]", "width": 1.565621426286024, "title": "Listens_Questions (3) → Discouraged_Career (22)<br>β=-0.364, CV R²=0.28, |β|·R²=0.103<br>t=-3.14, p=0.00212", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": -0.3637953389515382, "cv_r2": 0.2825122729545693, "w": 0.10277664809747702, "p": 0.0021203675638748}, {"id": "e17", "from": "13.Too_Critical[F2-]", "to": "22.Discouraged_Career[F4-]", "width": 1.2970058413788093, "title": "Too_Critical (13) → Discouraged_Career (22)<br>β=0.331, CV R²=0.28, |β|·R²=0.094<br>t=3.35, p=0.00109", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3314473651592942, "cv_r2": 0.2825122729545693, "w": 0.09363794849595533, "p": 0.0010860735897812}, {"id": "e18", "from": "3.Listens_Questions[F1]", "to": "23.Encouraged_Respect[F3]", "width": 4.777461413224335, "title": "Listens_Questions (3) → Encouraged_Respect (23)<br>β=0.426, CV R²=0.50, |β|·R²=0.212<br>t=3.95, p=0.000131", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.42610427220023, "cv_r2": 0.497643910282065, "w": 0.21204819620561588, "p": 0.0001313119483813}, {"id": "e19", "from": "18.Improved_Math_Understanding[F2]", "to": "23.Encouraged_Respect[F3]", "width": 2.4741329403126433, "title": "Improved_Math_Understanding (18) → Encouraged_Respect (23)<br>β=0.269, CV R²=0.50, |β|·R²=0.134<br>t=3.22, p=0.00166", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.2686369734235652, "cv_r2": 0.497643910282065, "w": 0.13368555390084216, "p": 0.0016577551929318}, {"id": "e20", "from": "11.Friendly_Atmosphere[F3]", "to": "23.Encouraged_Respect[F3]", "width": 2.624732346246414, "title": "Friendly_Atmosphere (11) → Encouraged_Respect (23)<br>β=0.279, CV R²=0.50, |β|·R²=0.139<br>t=2.71, p=0.00778", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.2789327180073949, "cv_r2": 0.497643910282065, "w": 0.13880916849480457, "p": 0.0077756762810643}, {"id": "e21", "from": "4.Avoids_Anger[F3]", "to": "23.Encouraged_Respect[F3]", "width": 1.0, "title": "Avoids_Anger (4) → Encouraged_Respect (23)<br>β=-0.168, CV R²=0.50, |β|·R²=0.084<br>t=-1.99, p=0.0491", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": -0.1678577164141226, "cv_r2": 0.497643910282065, "w": 0.08353337036734193, "p": 0.0491498806774401}, {"id": "e22", "from": "10.Understood_Strengths[F2]", "to": "24.Belief_SolvProblems[F4]", "width": 9.113020184026585, "title": "Understood_Strengths (10) → Belief_SolvProblems (24)<br>β=0.442, CV R²=0.81, |β|·R²=0.360<br>t=7.03, p=1.34e-10", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.4423919481596745, "cv_r2": 0.8127415549058032, "w": 0.3595503198251013, "p": 1.3353172294020295e-10}, {"id": "e23", "from": "25.Proud_Achievements[F2]", "to": "24.Belief_SolvProblems[F4]", "width": 5.237312774348304, "title": "Proud_Achievements (25) → Belief_SolvProblems (24)<br>β=0.280, CV R²=0.81, |β|·R²=0.228<br>t=5.11, p=1.22e-06", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.2801542734749694, "cv_r2": 0.8127415549058032, "w": 0.22769301983755227, "p": 1.2233296495510522e-06}, {"id": "e24", "from": "7.Cares_Success[F1]", "to": "24.Belief_SolvProblems[F4]", "width": 2.3681540611242764, "title": "Cares_Success (7) → Belief_SolvProblems (24)<br>β=0.160, CV R²=0.81, |β|·R²=0.130<br>t=2.70, p=0.00795", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.1600508733131223, "cv_r2": 0.8127415549058032, "w": 0.13007999564053874, "p": 0.0079500808130883}, {"id": "e25", "from": "21.Inspired_MathRel_Career[F4]", "to": "24.Belief_SolvProblems[F4]", "width": 2.783683992630817, "title": "Inspired_MathRel_Career (21) → Belief_SolvProblems (24)<br>β=0.177, CV R²=0.81, |β|·R²=0.144<br>t=4.42, p=2.18e-05", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.177445016555507, "cv_r2": 0.8127415549058032, "w": 0.14421693866560878, "p": 2.183981955838941e-05}, {"id": "e26", "from": "12.Supports_Goals[F2]", "to": "25.Proud_Achievements[F2]", "width": 5.495563433701894, "title": "Supports_Goals (12) → Proud_Achievements (25)<br>β=0.344, CV R²=0.69, |β|·R²=0.236<br>t=3.92, p=0.000145", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3441600212164428, "cv_r2": 0.6871195803089574, "w": 0.23647908933736403, "p": 0.0001449615781613}, {"id": "e27", "from": "19.Prepared_AdvMath[F4]", "to": "25.Proud_Achievements[F2]", "width": 5.9307299261374435, "title": "Prepared_AdvMath (19) → Proud_Achievements (25)<br>β=0.366, CV R²=0.69, |β|·R²=0.251<br>t=4.56, p=1.21e-05", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.3657065006116341, "cv_r2": 0.6871195803089574, "w": 0.2512840972165235, "p": 1.2142354202102254e-05}, {"id": "e28", "from": "24.Belief_SolvProblems[F4]", "to": "25.Proud_Achievements[F2]", "width": 3.6633757190117175, "title": "Belief_SolvProblems (24) → Proud_Achievements (25)<br>β=0.253, CV R²=0.69, |β|·R²=0.174<br>t=2.39, p=0.0186", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.2534425704730554, "cv_r2": 0.6871195803089574, "w": 0.17414535265586917, "p": 0.0186102820685272}, {"id": "e29", "from": "21.Inspired_MathRel_Career[F4]", "to": "26.Continue_MathRel_Studies[F4]", "width": 5.698482626368082, "title": "Inspired_MathRel_Career (21) → Continue_MathRel_Studies (26)<br>β=0.510, CV R²=0.48, |β|·R²=0.243<br>t=6.68, p=7.82e-10", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.510020149393543, "cv_r2": 0.4772021277390832, "w": 0.2433827004804038, "p": 7.82141797588069e-10}, {"id": "e30", "from": "17.Encouraged_Effort[F2]", "to": "26.Continue_MathRel_Studies[F4]", "width": 1.3556873906499836, "title": "Encouraged_Effort (17) → Continue_MathRel_Studies (26)<br>β=0.200, CV R²=0.48, |β|·R²=0.096<br>t=1.93, p=0.056", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": 0.2004064442704915, "cv_r2": 0.4772021277390832, "w": 0.09563438161850255, "p": 0.055993546170822}, {"id": "e31", "from": "3.Listens_Questions[F1]", "to": "26.Continue_MathRel_Studies[F4]", "width": 2.1786082793437496, "title": "Listens_Questions (3) → Continue_MathRel_Studies (26)<br>β=-0.259, CV R²=0.48, |β|·R²=0.124<br>t=-2.36, p=0.0199", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": -0.2590754745936541, "cv_r2": 0.4772021277390832, "w": 0.12363136772110453, "p": 0.0198548682394473}, {"id": "e32", "from": "13.Too_Critical[F2-]", "to": "26.Continue_MathRel_Studies[F4]", "width": 2.166075975983416, "title": "Too_Critical (13) → Continue_MathRel_Studies (26)<br>β=-0.258, CV R²=0.48, |β|·R²=0.123<br>t=-2.90, p=0.00439", "color": {"color": "#9E9E9E"}, "arrows": "to", "smooth": {"type": "dynamic"}, "beta": -0.2581820009973846, "cv_r2": 0.4772021277390832, "w": 0.12320500021988604, "p": 0.0043943086681864}]);
+  const targetSet = new Set(["17.Encouraged_Effort[F2]", "18.Improved_Math_Understanding[F2]", "19.Prepared_AdvMath[F4]", "20.Encouraged_Thinking[F1]", "21.Inspired_MathRel_Career[F4]", "22.Discouraged_Career[F4-]", "23.Encouraged_Respect[F3]", "24.Belief_SolvProblems[F4]", "25.Proud_Achievements[F2]", "26.Continue_MathRel_Studies[F4]"]);
+
+  const container = document.getElementById('mynetwork');
+  const panel = document.getElementById('panel_content');
+
+  const data = { nodes: nodes, edges: edges };
+
+  const options = {
+    physics: {
+      stabilization: true,
+      barnesHut: {
+        gravitationalConstant: -18000,
+        springLength: 140,
+        springConstant: 0.03,
+        damping: 0.2
+      }
+    },
+    interaction: { hover: true, tooltipDelay: 120 },
+    nodes: { scaling: { min: 10, max: 55 } },
+    edges: { arrows: { to: { enabled: true, scaleFactor: 1.0 } }, smooth: true }
+  };
+
+  const network = new vis.Network(container, data, options);
+
+  // Cache bazowych stylów
+  const baseNode = new Map();
+  nodes.forEach(n => {
+    baseNode.set(n.id, {
+      color: n.color,
+      borderWidth: n.borderWidth,
+      label: n.label,
+      font: n.font
+    });
+  });
+
+  const baseEdge = new Map();
+  edges.forEach(e => {
+    baseEdge.set(e.id, {
+      color: e.color,
+      width: e.width
+    });
+  });
+
+  function resetStyles() {
+    edges.forEach(e => {
+      const b = baseEdge.get(e.id);
+      edges.update({ id: e.id, color: b.color, width: b.width });
+    });
+ 
+
+    panel.innerHTML = "";
+  }
+
+function dimAll() {
+  // 1) edges: przygaś WSZYSTKIE
+  edges.forEach(e => {
+    const b = baseEdge.get(e.id);
+    edges.update({
+      id: e.id,
+      color: { color: "rgba(170,170,170,0.18)" },
+      width: Math.max(1, b.width * 0.7)
+    });
+  });
+
+  // 2) nodes: przygaś obramowanie + tekst (tło zostaje)
+  nodes.forEach(n => {
+    const b = baseNode.get(n.id);
+    nodes.update({
+      id: n.id,
+      color: {
+        background: b.color.background,
+        border: "rgba(120,120,120,0.25)"
+      },
+      borderWidth: 1,
+      font: { ...b.font, color: "rgba(30,30,30,0.25)" }
+    });
+  });
+}
+
+
+
+function setNodeStrong(id, fillColor, borderColor, borderWidth) {
+  nodes.update({
+    id: id,
+    color: { background: fillColor, border: borderColor },
+    borderWidth: borderWidth,
+    font: { color: "#111111" }
+  });
+}
+
+
+function highlightIncoming(targetId) {
+  dimAll();
+
+  const incoming = edges.get({
+    filter: function(e) { return e.to === targetId; }
+  });
+
+  // target – cały niebieski
+  setNodeStrong(targetId, "#2F6DAE", "#0F3D66", 5);
+
+  // predyktory – całe czerwone + strzałki
+  incoming.forEach(e => {
+    edges.update({
+      id: e.id,
+      color: { color: "#E45756" },
+      width: Math.max(2, baseEdge.get(e.id).width * 1.35)
+    });
+    setNodeStrong(e.from, "#E45756", "#8C2D2B", 4);
+  });
+
+  const rows = incoming.map(e => {
+    const fromTitle = (nodes.get(e.from) || {}).title || e.from;
+    return {
+      label: fromTitle,
+      beta: e.beta,
+      r2: e.cv_r2,
+      p: e.p
+    };
+  }).sort((a,b) => Math.abs(b.beta) - Math.abs(a.beta));
+
+  const tlabel = (nodes.get(targetId) || {}).title || targetId;
+
+  let html = "";
+  html += `<div style="margin-bottom:8px;"><b>Target:</b> <span class="target">${tlabel}</span></div>`;
+  html += `<table>
+    <thead>
+      <tr>
+        <th>Predictor</th>
+        <th class="mono">β</th>
+        <th class="mono">CV R²</th>
+        <th class="mono">p</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  for (const r of rows) {
+    const ptxt = (r.p === null || typeof r.p === "undefined") ? "" : Number(r.p).toPrecision(3);
+    html += `<tr>
+      <td>${r.label}</td>
+      <td class="mono">${r.beta.toFixed(3)}</td>
+      <td class="mono">${r.r2.toFixed(2)}</td>
+      <td class="mono">${ptxt}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+  panel.innerHTML = html;
+}
+
+
+
+
+
+network.on("hoverNode", function(params) {
+  const nid = params.node;
+  if (targetSet.has(nid)) {
+    highlightIncoming(nid);
+  }
+});
+
+network.on("blurNode", function(params) {
+  resetStyles();
+});
+
+resetStyles();
+
+</script>
+</body>
+</html>
