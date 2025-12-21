@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interaktywne grafy</title>
+</head>
+<body>
+  <h1>Interaktywne grafy – regresja liniowa</h1>
+  <ul>
+    <li><a href="./digraph_girls.html">Girls</a></li>
+    <li><a href="./digraph_boys.html">Boys</a></li>
+  </ul>
+</body>
+</html>
